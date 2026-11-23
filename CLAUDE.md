@@ -7,6 +7,10 @@ Written in TypeScript with roblox-ts, synced to Studio with Rojo.
 - The developer owns all code. A friend owns models, map and design (Blender, then Roblox Studio).
 - Scripts live in Git and sync through Rojo. Map and models are NOT edited through this repo's code.
 - Never edit binary place files (.rbxl / .rbxm). Models are consumed through documented paths only.
+- Roblox Studio MCP (`roblox-studio` server, registered locally per developer) is READ-ONLY for Claude: inspect the
+  game tree, scripts and Output. Tools that change the place or the account (`execute_luau`, `multi_edit`, asset
+  generation/upload, Open Cloud, input simulation) are denied in `.claude/settings.json`. `start_stop_play` asks first.
+  Save or publish a place version before any playtest.
 
 ## Commands
 (Keep this list current.)
