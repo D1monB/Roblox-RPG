@@ -1,6 +1,7 @@
-import { ContextActionService, Players, ReplicatedStorage } from "@rbxts/services";
-import { MOVEMENT_REMOTES, MOVEMENT_REMOTE_FOLDER, ROLL, ROLL_SPEED, STAMINA } from "shared/features/movement";
+import { ContextActionService, Players, ReplicatedStorage, Workspace } from "@rbxts/services";
+import { MOVEMENT_REMOTES, MOVEMENT_REMOTE_FOLDER, ROLL, STAMINA } from "shared/features/movement";
 import { MOVEMENT_ANIMATIONS } from "./animations";
+import { playRoll } from "./roll-motion";
 
 // The client sends intent (sprint key, roll direction) and plays the roll locally so it feels instant.
 // Speed, stamina, cooldown and i-frames are decided by the server (docs/movement.md).
@@ -48,42 +49,30 @@ function handleSprint(_: string, inputState: Enum.UserInputState, input: InputOb
 	return Enum.ContextActionResult.Sink;
 }
 
-/** Moving: roll where we move. Standing: step back (Souls-style backstep). Always flat and unit length. */
+/**
+ * Moving: roll where the stick/keys point. Standing: roll forward, away from the camera (there is
+ * no lock-on, so "forward" is what players expect). Always flat and unit length.
+ */
 function rollDirection(humanoid: Humanoid, root: BasePart): Vector3 | undefined {
 	const moving = humanoid.MoveDirection;
-	const source = moving.Magnitude > 0.1 ? moving : root.CFrame.LookVector.mul(-1);
+	const camera = Workspace.CurrentCamera;
+	const standingDirection = camera !== undefined ? camera.CFrame.LookVector : root.CFrame.LookVector;
+	const source = moving.Magnitude > 0.1 ? moving : standingDirection;
 	const flat = new Vector3(source.X, 0, source.Z);
 	return flat.Magnitude > 0.01 ? flat.Unit : undefined;
 }
 
-function playRollAnimation(humanoid: Humanoid): void {
+/** Plays the designer's roll animation if one is set. Returns true if it is playing. */
+function playRollAnimation(humanoid: Humanoid): boolean {
 	const id = MOVEMENT_ANIMATIONS.roll;
 	const animator = humanoid.FindFirstChildOfClass("Animator");
 	if (id === undefined || animator === undefined) {
-		return;
+		return false;
 	}
 	const animation = new Instance("Animation");
 	animation.AnimationId = id;
 	animator.LoadAnimation(animation).Play();
-}
-
-/** Pushes the character along the ground for the roll duration. Gravity still applies (Plane mode). */
-function pushCharacter(root: BasePart, direction: Vector3): void {
-	const attachment = new Instance("Attachment");
-	attachment.Parent = root;
-	const velocity = new Instance("LinearVelocity");
-	velocity.Attachment0 = attachment;
-	velocity.RelativeTo = Enum.ActuatorRelativeTo.World;
-	velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane;
-	velocity.PrimaryTangentAxis = new Vector3(1, 0, 0);
-	velocity.SecondaryTangentAxis = new Vector3(0, 0, 1);
-	velocity.PlaneVelocity = new Vector2(direction.X * ROLL_SPEED, direction.Z * ROLL_SPEED);
-	velocity.MaxForce = math.huge;
-	velocity.Parent = root;
-	task.delay(ROLL.duration, () => {
-		velocity.Destroy();
-		attachment.Destroy();
-	});
+	return true;
 }
 
 // Same rule as the server: rolls start from the ground only.
@@ -118,8 +107,9 @@ function handleRoll(_: string, inputState: Enum.UserInputState): Enum.ContextAct
 	}
 	lastRollAt = now;
 	rollRemote?.FireServer(direction);
-	pushCharacter(root, direction);
-	playRollAnimation(humanoid);
+	// A real animation replaces the procedural somersault; the facing and speed curve stay.
+	const hasAnimation = playRollAnimation(humanoid);
+	playRoll(humanoid, root, direction, !hasAnimation);
 	return Enum.ContextActionResult.Sink;
 }
 
