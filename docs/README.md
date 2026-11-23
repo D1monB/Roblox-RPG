@@ -14,6 +14,7 @@
 |---|---|---|
 | `stats-and-leveling.md` | Elden Ring | v1 |
 | `combat.md` | WoW | v1 |
+| `movement.md` | MMORPG + Elden Ring (перекат) | v1 |
 | `classes-and-skills.md` | Baldur's Gate 3 / Divinity | v1 |
 | `items-and-rarity.md` | Baldur's Gate 3 / Divinity | v1 |
 | `profile-and-saving.md` | ProfileStore (loleris) | v1 |
@@ -31,7 +32,8 @@
 1. Каркас проєкту та CI
 2. Профіль гравця й збереження (ProfileStore)
 3. Статі та рівні
-4. Автоатака й ціль
-5. Здібності
-6. Вороги (3 типи). Бос поза першою версією (`decisions.md`, #13)
-7. Інвентар і спорядження
+4. Рух: sprint, перекат, стамина (`movement.md`). Крок додано 2026-11-23, бо від нього залежать моделі й анімації
+5. Автоатака й ціль (раніше був кроком 4)
+6. Здібності
+7. Вороги (3 типи). Бос поза першою версією (`decisions.md`, #13)
+8. Інвентар і спорядження
