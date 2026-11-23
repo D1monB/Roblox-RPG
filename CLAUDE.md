@@ -102,6 +102,15 @@ Data security and anti-exploit are the top requirement of this project.
 - Small commits, clear messages (`feat(combat): add auto-attack tick`).
 - Do not commit generated output (`out/`, `node_modules/`).
 
+## Token efficiency
+- To understand code structure (definitions, callers, change impact, linked tests) use the Graphify tools
+  (`graphify_find`, `graphify_callers`, `graphify_impact`, `graphify_tests_for`) before reading many files.
+  Use text search only for literal strings and config. If the graph's commit differs from HEAD, read the file.
+- Never read `node_modules/`, `out/`, `include/` or `package-lock.json` (blocked in `.claude/settings.json`).
+- Show only failing lines of build/lint/test output. `/pre-pr` does this for the four gates.
+- Project skills: `/pre-pr` (all gates), `/new-feature <name>` (scaffold a feature slice).
+- A hook formats edited files with Prettier automatically; do not spend turns on formatting.
+
 ## How to work with me
 - Before big changes, state a short plan and wait for approval.
 - Explain non-obvious decisions briefly so the developer learns the Roblox ecosystem (new to it).
