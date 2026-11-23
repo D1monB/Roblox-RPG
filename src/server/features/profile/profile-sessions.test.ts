@@ -88,6 +88,39 @@ class ProfileSessionsTests {
 	}
 
 	@Test
+	public notifiesListenersOnlyWhenDataIsReady() {
+		const h = new Harness();
+		const seen: number[] = [];
+		h.sessions.onLoaded((userId) => {
+			// The data must already be available inside the callback.
+			Assert.notUndefined(h.sessions.getData(userId));
+			seen.push(userId);
+		});
+		h.sessions.playerAdded(USER);
+		Assert.equal(seen.size(), 1);
+		Assert.equal(seen[0], USER);
+	}
+
+	@Test
+	public noListenerCallWhenLoadingFails() {
+		const h = new Harness();
+		let calls = 0;
+		h.sessions.onLoaded(() => (calls += 1));
+		h.failToStart = true;
+		h.sessions.playerAdded(USER);
+		Assert.equal(calls, 0);
+	}
+
+	@Test
+	public brokenListenerDoesNotBreakLoading() {
+		const h = new Harness();
+		h.sessions.onLoaded(() => error("boom"));
+		h.sessions.playerAdded(USER);
+		Assert.notUndefined(h.sessions.getData(USER));
+		Assert.equal(h.kicks.size(), 0);
+	}
+
+	@Test
 	public handsOutTheSameTableThatWillBeSaved() {
 		const h = new Harness();
 		h.sessions.playerAdded(USER);

@@ -9,6 +9,13 @@ function kickPlayer(userId: number, message: string): void {
 	Players.GetPlayerByUserId(userId)?.Kick(message);
 }
 
+const loadedListeners: Array<(player: Player) => void> = [];
+
+/** Runs `callback` each time a player's data finishes loading. Register before startProfileService(). */
+export function onProfileLoaded(callback: (player: Player) => void): void {
+	loadedListeners.push(callback);
+}
+
 /** Starts loading data for every player who joins. Call once, before any other feature reads player data. */
 export function startProfileService(): void {
 	if (sessions !== undefined) {
@@ -16,6 +23,16 @@ export function startProfileService(): void {
 	}
 	const created = new ProfileSessions(createRobloxBackend(), kickPlayer, (message) => warn(`[profile] ${message}`));
 	sessions = created;
+
+	created.onLoaded((userId) => {
+		const player = Players.GetPlayerByUserId(userId);
+		if (player === undefined) {
+			return;
+		}
+		for (const listener of loadedListeners) {
+			listener(player);
+		}
+	});
 
 	Players.PlayerAdded.Connect((player) => created.playerAdded(player.UserId));
 	Players.PlayerRemoving.Connect((player) => created.playerRemoving(player.UserId));
