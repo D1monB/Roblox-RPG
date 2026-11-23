@@ -1,4 +1,4 @@
-import { ContextActionService, Players, ReplicatedStorage, Workspace } from "@rbxts/services";
+import { ContextActionService, Players, ReplicatedStorage } from "@rbxts/services";
 import { MOVEMENT_REMOTES, MOVEMENT_REMOTE_FOLDER, ROLL, STAMINA } from "shared/features/movement";
 import { MOVEMENT_ANIMATIONS } from "./animations";
 import { playRoll } from "./roll-motion";
@@ -50,14 +50,14 @@ function handleSprint(_: string, inputState: Enum.UserInputState, input: InputOb
 }
 
 /**
- * Moving: roll where the stick/keys point. Standing: roll forward, away from the camera (there is
- * no lock-on, so "forward" is what players expect). Always flat and unit length.
+ * Moving: roll where the stick/keys point. Standing: roll where the character faces. Always flat and
+ * unit length.
  */
 function rollDirection(humanoid: Humanoid, root: BasePart): Vector3 | undefined {
 	const moving = humanoid.MoveDirection;
-	const camera = Workspace.CurrentCamera;
-	const standingDirection = camera !== undefined ? camera.CFrame.LookVector : root.CFrame.LookVector;
-	const source = moving.Magnitude > 0.1 ? moving : standingDirection;
+	// Standing still: roll the way the character already faces, which is the direction it last moved
+	// in (Roblox turns the character toward its movement). The camera is deliberately not used.
+	const source = moving.Magnitude > 0.1 ? moving : root.CFrame.LookVector;
 	const flat = new Vector3(source.X, 0, source.Z);
 	return flat.Magnitude > 0.01 ? flat.Unit : undefined;
 }
