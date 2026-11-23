@@ -44,7 +44,7 @@ src/
     lib/
 ```
 
-Features (initial): `profile` (data), `stats`, `combat`, `abilities`, `inventory`, `enemies`, later `dungeons`, `world`.
+Features (initial): `profile` (data), `stats`, `movement`, `combat`, `abilities`, `inventory`, `enemies`, later `dungeons`, `world`.
 
 Rules:
 1. A feature exposes only its `index.ts`. Never import another feature's internals.
