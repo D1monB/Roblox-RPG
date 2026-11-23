@@ -7,6 +7,10 @@ Written in TypeScript with roblox-ts, synced to Studio with Rojo.
 - The developer owns all code. A friend owns models, map and design (Blender, then Roblox Studio).
 - Scripts live in Git and sync through Rojo. Map and models are NOT edited through this repo's code.
 - Never edit binary place files (.rbxl / .rbxm). Models are consumed through documented paths only.
+- Roblox Studio MCP (`roblox-studio` server, registered locally per developer) is READ-ONLY for Claude: inspect the
+  game tree, scripts and Output. Tools that change the place or the account (`execute_luau`, `multi_edit`, asset
+  generation/upload, Open Cloud, input simulation) are denied in `.claude/settings.json`. `start_stop_play` asks first.
+  Save or publish a place version before any playtest.
 
 ## Commands
 (Keep this list current.)
@@ -101,6 +105,18 @@ Data security and anti-exploit are the top requirement of this project.
 - `main` and `develop` are protected: changes go through pull requests, CI must pass.
 - Small commits, clear messages (`feat(combat): add auto-attack tick`).
 - Do not commit generated output (`out/`, `node_modules/`).
+
+## Token efficiency
+- To understand code structure (definitions, callers, change impact, linked tests) use the Graphify tools
+  (`graphify_find`, `graphify_callers`, `graphify_impact`, `graphify_tests_for`) before reading many files.
+  Use text search only for literal strings and config. If the graph's commit differs from HEAD, read the file.
+- Never read `node_modules/`, `out/`, `include/` or `package-lock.json` (blocked in `.claude/settings.json`).
+- Show only failing lines of build/lint/test output. `/pre-pr` does this for the four gates.
+- Project skills: `/pre-pr` (all gates), `/new-feature <name>` (scaffold a feature slice).
+- A hook formats edited files with Prettier automatically; do not spend turns on formatting.
+- Subagents (`.claude/agents/`): `security-reviewer` (read-only; run it after changes to remotes, player data,
+  inventory, currency or combat, and before a PR) and `test-writer` (lunit tests incl. bad input for pure logic).
+  They work in their own context and return a short report, which keeps this conversation small.
 
 ## How to work with me
 - Before big changes, state a short plan and wait for approval.
