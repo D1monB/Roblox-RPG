@@ -7,27 +7,35 @@ import { rollAngleAt, rollProgress, rollSpeedAt, rollTuckAt } from "shared/featu
 // The "curled up" pose while rolling, as DATA: how far each R15 joint bends at full tuck, in radians.
 // Joint C0 is turned around the X axis. Positive swings a hanging limb FORWARD, negative leans the
 // upright torso/head forward. Tune the numbers here if a limb looks wrong; the logic does not change.
+// Joints are found by NAME anywhere in the character: in Roblox a joint lives inside the part it
+// moves (the knee is inside the lower leg), so searching one fixed parent does not work.
 interface TuckJoint {
-	partName: string;
 	jointName: string;
 	pitch: number;
 }
 
 const TUCK_POSE: ReadonlyArray<TuckJoint> = [
 	// Thighs up to the chest, shins folded back.
-	{ partName: "LowerTorso", jointName: "LeftHip", pitch: 1.5 },
-	{ partName: "LowerTorso", jointName: "RightHip", pitch: 1.5 },
-	{ partName: "LeftUpperLeg", jointName: "LeftKnee", pitch: -1.7 },
-	{ partName: "RightUpperLeg", jointName: "RightKnee", pitch: -1.7 },
+	{ jointName: "LeftHip", pitch: 1.5 },
+	{ jointName: "RightHip", pitch: 1.5 },
+	{ jointName: "LeftKnee", pitch: -1.7 },
+	{ jointName: "RightKnee", pitch: -1.7 },
 	// Arms wrapped around the knees.
-	{ partName: "UpperTorso", jointName: "LeftShoulder", pitch: 1.3 },
-	{ partName: "UpperTorso", jointName: "RightShoulder", pitch: 1.3 },
-	{ partName: "LeftUpperArm", jointName: "LeftElbow", pitch: 1.2 },
-	{ partName: "RightUpperArm", jointName: "RightElbow", pitch: 1.2 },
+	{ jointName: "LeftShoulder", pitch: 1.3 },
+	{ jointName: "RightShoulder", pitch: 1.3 },
+	{ jointName: "LeftElbow", pitch: 1.2 },
+	{ jointName: "RightElbow", pitch: 1.2 },
 	// Back rounded, chin down.
-	{ partName: "UpperTorso", jointName: "Waist", pitch: -0.5 },
-	{ partName: "Head", jointName: "Neck", pitch: -0.4 },
+	{ jointName: "Waist", pitch: -0.5 },
+	{ jointName: "Neck", pitch: -0.4 },
 ];
+
+// The joint that spins the whole body. R6 builds its "RootJoint" with a turned frame, so the same
+// angle spins the other way round there: the sign fixes that.
+const SPIN_JOINTS = [
+	{ jointName: "Root", sign: 1, rig: Enum.HumanoidRigType.R15 },
+	{ jointName: "RootJoint", sign: -1, rig: Enum.HumanoidRigType.R6 },
+] as const;
 
 interface BentJoint {
 	joint: Motor6D;
@@ -35,16 +43,16 @@ interface BentJoint {
 	pitch: number;
 }
 
-function findJoint(character: Instance | undefined, partName: string, jointName: string): Motor6D | undefined {
-	const joint = character?.FindFirstChild(partName)?.FindFirstChild(jointName);
-	return joint !== undefined && joint.IsA("Motor6D") ? joint : undefined;
+function findJoint(character: Instance | undefined, jointName: string): Motor6D | undefined {
+	const found = character?.FindFirstChild(jointName, true);
+	return found !== undefined && found.IsA("Motor6D") ? found : undefined;
 }
 
-/** The joints that exist on this rig. R6 and custom rigs just skip the ones they do not have. */
+/** The tuck joints that exist on this rig. Custom rigs just skip the ones they do not have. */
 function collectTuckJoints(character: Instance | undefined): Array<BentJoint> {
 	const bent: Array<BentJoint> = [];
 	for (const entry of TUCK_POSE) {
-		const joint = findJoint(character, entry.partName, entry.jointName);
+		const joint = findJoint(character, entry.jointName);
 		if (joint !== undefined) {
 			bent.push({ joint, originalC0: joint.C0, pitch: entry.pitch });
 		}
@@ -59,11 +67,21 @@ function collectTuckJoints(character: Instance | undefined): Array<BentJoint> {
  */
 export function playRoll(humanoid: Humanoid, root: BasePart, direction: Vector3, somersault: boolean): void {
 	const character = root.Parent;
-	// R6 characters have no "Root" joint; they simply roll without the spin.
-	const spinJoint = somersault ? findJoint(character, "LowerTorso", "Root") : undefined;
+	const spin = SPIN_JOINTS.find((candidate) => candidate.rig === humanoid.RigType);
+	const spinJoint = somersault && spin !== undefined ? findJoint(character, spin.jointName) : undefined;
+	const spinSign = spin?.sign ?? 1;
 	const spinOriginalC0 = spinJoint?.C0;
-	const tuckJoints = somersault ? collectTuckJoints(character) : [];
+	// Only R15 has the full pose; on R6 the body still spins, just without curling up.
+	const tuckJoints = somersault && humanoid.RigType === Enum.HumanoidRigType.R15 ? collectTuckJoints(character) : [];
 	const wasAutoRotate = humanoid.AutoRotate;
+
+	if (somersault) {
+		// Shown once per roll in Output. If the spin does not appear in game, this says why.
+		print(
+			`[movement] roll: rig=${humanoid.RigType.Name}, spin joint=${spinJoint !== undefined}, ` +
+				`tuck joints=${tuckJoints.size()}/${TUCK_POSE.size()}`,
+		);
+	}
 
 	// Face the roll direction so the roll goes FORWARD (Souls-like), and stop Roblox turning us back.
 	humanoid.AutoRotate = false;
@@ -109,7 +127,7 @@ export function playRoll(humanoid: Humanoid, root: BasePart, direction: Vector3,
 		velocity.PlaneVelocity = new Vector2(direction.X * speed, direction.Z * speed);
 		if (spinJoint !== undefined && spinOriginalC0 !== undefined) {
 			// C0 is the joint's offset from the root part. Turning it spins the body around the hips.
-			spinJoint.C0 = spinOriginalC0.mul(CFrame.Angles(rollAngleAt(progress), 0, 0));
+			spinJoint.C0 = spinOriginalC0.mul(CFrame.Angles(rollAngleAt(progress) * spinSign, 0, 0));
 		}
 		const tuck = rollTuckAt(progress);
 		for (const bent of tuckJoints) {
