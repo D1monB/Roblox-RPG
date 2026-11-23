@@ -114,6 +114,9 @@ Data security and anti-exploit are the top requirement of this project.
 - Show only failing lines of build/lint/test output. `/pre-pr` does this for the four gates.
 - Project skills: `/pre-pr` (all gates), `/new-feature <name>` (scaffold a feature slice).
 - A hook formats edited files with Prettier automatically; do not spend turns on formatting.
+- Subagents (`.claude/agents/`): `security-reviewer` (read-only; run it after changes to remotes, player data,
+  inventory, currency or combat, and before a PR) and `test-writer` (lunit tests incl. bad input for pure logic).
+  They work in their own context and return a short report, which keeps this conversation small.
 
 ## How to work with me
 - Before big changes, state a short plan and wait for approval.
