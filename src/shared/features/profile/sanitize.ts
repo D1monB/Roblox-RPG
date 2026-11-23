@@ -2,6 +2,7 @@ import { MAX_LEVEL, STAT_IDS, isClassId } from "shared/features/stats";
 import { PlainTable } from "shared/lib/tables";
 
 // Upper bounds keep a corrupted number from overflowing later math. Real values stay far below them.
+// Raising one is a schema change: bump CURRENT_SCHEMA_VERSION (see schema.ts) so older servers refuse the save.
 const MAX_STAT_POINTS = 1000;
 const MAX_UNSPENT_POINTS = 1000;
 const MAX_COUNTER = 1_000_000_000_000;

@@ -7,6 +7,9 @@ import { CLASS_IDS, ClassId, StatId } from "shared/features/stats";
  * see docs/profile-and-saving.md. Adding a new field with a default does NOT need a bump.
  */
 export const CURRENT_SCHEMA_VERSION = 1;
+// Also bump (with an empty migration) when you ADD an allowed value (a new class id) or RAISE a cap in
+// sanitize.ts. Otherwise an older server still running during an update does not know the new value,
+// resets it, and saves that over the player's data. A higher version makes older servers refuse the save.
 
 export type AllocatedStats = { [K in StatId]: number };
 

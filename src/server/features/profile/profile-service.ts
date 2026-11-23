@@ -26,7 +26,12 @@ export function startProfileService(): void {
 	}
 }
 
-/** The player's live data, or undefined if it is not loaded (yet). Server only. */
+/**
+ * The player's live data, or undefined if it is not loaded (yet). Server only.
+ * Call it fresh for every operation and never keep the result: after the player leaves or the session is
+ * lost, a kept table can still be changed but is no longer saved, which makes side effects (e.g. granting
+ * an item elsewhere) a duplication risk. Value-moving features must re-check before they write.
+ */
 export function getProfileData(player: Player): ProfileData | undefined {
 	return sessions?.getData(player.UserId);
 }
