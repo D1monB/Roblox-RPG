@@ -26,7 +26,7 @@
 		"eslint-plugin-roblox-ts": "1.5.0",
 		"prettier": "3.10.1",
 		"roblox-ts": "3.0.0",
-		"typescript": "5.5.3",
+		"typescript": "7.0.2",
 		"typescript-eslint": "8.73.0"
 	},
 	"overrides": {
