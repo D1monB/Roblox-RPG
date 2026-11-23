@@ -4,6 +4,7 @@ export { classUsesMana, emptyStatPoints, startingStats } from "./class-definitio
 export type { StatPoints } from "./class-definitions";
 export { calculateDerivedStats, totalStats } from "./derived-stats";
 export type { DerivedStats } from "./derived-stats";
+export { MAX_STAT_POINTS, MAX_UNSPENT_POINTS } from "./limits";
 export { MAX_LEVEL, xpToNextLevel } from "./formulas";
 export { CLASS_IDS, STAT_IDS, isClassId, isStatId } from "./ids";
 export type { ClassId, StatId } from "./ids";

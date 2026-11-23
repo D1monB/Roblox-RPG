@@ -1,6 +1,7 @@
 import { Assert, Test } from "@rbxts/lunit";
 import { emptyStatPoints } from "./class-definitions";
 import { MAX_LEVEL } from "./formulas";
+import { MAX_STAT_POINTS, MAX_UNSPENT_POINTS } from "./limits";
 import { MAX_XP_PER_GRANT, allocatePoint, applyXp } from "./progression";
 
 const fresh = { level: 1, xp: 0, unspentPoints: 0 };
@@ -119,6 +120,53 @@ class ProgressionTests {
 	public rejectsCorruptedPointCounter() {
 		Assert.undefined(allocatePoint({ allocated: emptyStatPoints(), unspentPoints: 0 / 0 }, "mind"));
 		Assert.undefined(allocatePoint({ allocated: emptyStatPoints(), unspentPoints: 1.5 }, "mind"));
+	}
+
+	// Regression: a point spent on a stat already at the saved maximum used to become 1001 in memory,
+	// and loading cut it back to 1000, so the player lost the point.
+	@Test
+	public refusesToSpendPastTheSavedStatMaximum() {
+		const atCap = { ...emptyStatPoints(), strength: MAX_STAT_POINTS };
+		const result = allocatePoint({ allocated: atCap, unspentPoints: 5 }, "strength");
+		Assert.undefined(result);
+	}
+
+	@Test
+	public lastPointBeforeTheMaximumIsAccepted() {
+		const almost = { ...emptyStatPoints(), strength: MAX_STAT_POINTS - 1 };
+		const result = allocatePoint({ allocated: almost, unspentPoints: 1 }, "strength");
+		Assert.equal(result?.allocated.strength, MAX_STAT_POINTS);
+		Assert.equal(result?.unspentPoints, 0);
+	}
+
+	@Test
+	public maxedStatDoesNotBlockOtherStats() {
+		const atCap = { ...emptyStatPoints(), strength: MAX_STAT_POINTS };
+		const result = allocatePoint({ allocated: atCap, unspentPoints: 1 }, "mind");
+		Assert.equal(result?.allocated.mind, 1);
+	}
+
+	// Regression: a level-up reward could push unspentPoints to 1001, which loading cuts to 1000.
+	@Test
+	public levelUpDoesNotPushUnspentPointsPastTheSavedMaximum() {
+		const full = { level: 5, xp: 0, unspentPoints: MAX_UNSPENT_POINTS };
+		const result = applyXp(full, 100_000);
+		Assert.notUndefined(result);
+		Assert.equal(result?.progression.unspentPoints, MAX_UNSPENT_POINTS);
+		Assert.equal(result?.progression.level, 5);
+		Assert.equal(result?.levelsGained, 0);
+		// The XP is kept, not thrown away.
+		Assert.equal(result?.progression.xp, 100_000);
+	}
+
+	@Test
+	public levelUpResumesOnceThereIsRoomForThePoint() {
+		const nearlyFull = { level: 1, xp: 0, unspentPoints: MAX_UNSPENT_POINTS - 1 };
+		// 100 XP for level 1 -> 2 fits (999 -> 1000). The next level would need a 1001st point.
+		const result = applyXp(nearlyFull, 100 + 283 + 10);
+		Assert.equal(result?.progression.level, 2);
+		Assert.equal(result?.progression.unspentPoints, MAX_UNSPENT_POINTS);
+		Assert.equal(result?.levelsGained, 1);
 	}
 
 	@Test

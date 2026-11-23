@@ -3,6 +3,7 @@
 import { StatPoints } from "./class-definitions";
 import { MAX_LEVEL, xpToNextLevel } from "./formulas";
 import { isStatId } from "./ids";
+import { MAX_STAT_POINTS, MAX_UNSPENT_POINTS } from "./limits";
 
 export const POINTS_PER_LEVEL = 1;
 
@@ -49,6 +50,11 @@ export function applyXp(current: Progression, gained: number): XpResult | undefi
 		if (needed === undefined || xp < needed) {
 			break;
 		}
+		// The reward point would not fit in the saved counter (loading would cut it off). Keep the XP
+		// and the level for now: the level-up happens once the player has spent points. Nothing is lost.
+		if (unspentPoints + POINTS_PER_LEVEL > MAX_UNSPENT_POINTS) {
+			break;
+		}
 		xp -= needed;
 		level += 1;
 		levelsGained += 1;
@@ -66,12 +72,18 @@ export interface Allocation {
 	unspentPoints: number;
 }
 
-/** Spends one point on `statId`. Returns undefined for an unknown stat or when no points are left. */
+/**
+ * Spends one point on `statId`. Returns undefined for an unknown stat, when no points are left, or when the
+ * stat is already at its saved maximum (the point would be cut off on the next load, so it stays unspent).
+ */
 export function allocatePoint(current: Allocation, statId: unknown): Allocation | undefined {
 	if (!isStatId(statId)) {
 		return undefined;
 	}
 	if (!isWholeNumber(current.unspentPoints) || current.unspentPoints < 1) {
+		return undefined;
+	}
+	if (current.allocated[statId] >= MAX_STAT_POINTS) {
 		return undefined;
 	}
 	const allocated: StatPoints = { ...current.allocated };
