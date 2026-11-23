@@ -28,9 +28,9 @@ npm-debug.log*
 Thumbs.db
 desktop.ini
 .idea/
+# Personal editor settings stay personal; only the recommended extensions list is shared.
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
 
 # Claude Code local (per-user) settings
 .claude/settings.local.json
