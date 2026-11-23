@@ -1,6 +1,6 @@
 // Pure stat math. No Roblox API calls here, so it runs under Lune in unit tests (CLAUDE.md rule 3).
 
-export const MAX_LEVEL = 100;
+export const MAX_LEVEL = 50;
 
 // Tuning values live in one place so balance changes do not touch logic.
 const BASE_XP = 100;
