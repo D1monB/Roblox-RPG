@@ -7,6 +7,10 @@ export type StatId = (typeof STAT_IDS)[number];
 export const CLASS_IDS = ["warrior", "mage", "archer"] as const;
 export type ClassId = (typeof CLASS_IDS)[number];
 
+export function isStatId(value: unknown): value is StatId {
+	return typeIs(value, "string") && (STAT_IDS as ReadonlyArray<string>).includes(value);
+}
+
 export function isClassId(value: unknown): value is ClassId {
 	return typeIs(value, "string") && (CLASS_IDS as ReadonlyArray<string>).includes(value);
 }
