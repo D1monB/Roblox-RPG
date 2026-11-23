@@ -25,6 +25,21 @@ export function rollSpeedAt(progress: number): number {
 	return ROLL_START_SPEED * remaining * remaining;
 }
 
+// How long the character takes to curl up and to straighten out, as a share of the roll.
+const TUCK_RAMP = 0.2;
+
+/**
+ * How curled up the body is, 0 (standing) .. 1 (fully tucked): curls up quickly, stays tucked while
+ * rolling over, then straightens out so the landing is upright. Smooth at both ends.
+ */
+export function rollTuckAt(progress: number): number {
+	const t = clamp01(progress);
+	const edge = math.min(t, 1 - t) / TUCK_RAMP;
+	const x = edge >= 1 ? 1 : edge;
+	// Smoothstep: no sudden jump when the pose starts or ends.
+	return x * x * (3 - 2 * x);
+}
+
 /**
  * Forward pitch of the body in radians (negative = forward flip): eased in and out, one full turn.
  * It starts and ends at exactly 0 so the character lands upright.

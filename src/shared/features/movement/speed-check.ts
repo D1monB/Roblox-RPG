@@ -5,7 +5,7 @@
 // tolerance) and is capped at a short burst. A lag spike that delivers 1 s of movement at once fits in
 // the burst; sustained movement faster than the legal speed drains the budget and fails.
 // (A fixed slack added to every window would instead become a standing speed bonus.)
-import { SPEED_CHECK } from "./tuning";
+import { ROLL, SPEED_CHECK } from "./tuning";
 
 export interface MoveSample {
 	// Position change between two server samples, in studs.
@@ -21,6 +21,9 @@ export interface SpeedBudget {
 	flat: number;
 	// Upward studs the player may still rise right now.
 	rise: number;
+	// Extra horizontal studs earned by a roll the server ACCEPTED. Not capped by the burst limit, because
+	// a roll on top of a sprint is legal; the caller expires it shortly after the roll.
+	credit: number;
 }
 
 export interface SpeedVerdict {
@@ -38,7 +41,18 @@ export function fullSpeedBudget(maxSpeed: number): SpeedBudget {
 	return {
 		flat: maxSpeed * SPEED_CHECK.burstSeconds,
 		rise: SPEED_CHECK.maxRiseSpeed * SPEED_CHECK.burstSeconds,
+		credit: 0,
 	};
+}
+
+/** The server accepted a roll: allow its distance on top of normal movement. Set, not added, so rolls do not stack. */
+export function grantRollCredit(budget: SpeedBudget): SpeedBudget {
+	return { ...budget, credit: ROLL.distance };
+}
+
+/** Takes the roll credit away again (the roll is over). */
+export function clearRollCredit(budget: SpeedBudget): SpeedBudget {
+	return { ...budget, credit: 0 };
 }
 
 /**
@@ -56,11 +70,21 @@ export function checkMove(budget: SpeedBudget, sample: MoveSample, maxSpeed: num
 	const refilled: SpeedBudget = {
 		flat: math.min(cap.flat, budget.flat + maxSpeed * SPEED_CHECK.tolerance * step),
 		rise: math.min(cap.rise, budget.rise + SPEED_CHECK.maxRiseSpeed * SPEED_CHECK.tolerance * step),
+		credit: budget.credit,
 	};
 	const flat = math.sqrt(dx * dx + dz * dz);
 	const rise = math.max(0, dy);
-	if (flat > refilled.flat || rise > refilled.rise) {
+	if (flat > refilled.flat + refilled.credit || rise > refilled.rise) {
 		return { plausible: false, budget: refilled };
 	}
-	return { plausible: true, budget: { flat: refilled.flat - flat, rise: refilled.rise - rise } };
+	// The normal budget pays first; the roll credit only covers what is left over.
+	const fromBudget = math.min(refilled.flat, flat);
+	return {
+		plausible: true,
+		budget: {
+			flat: refilled.flat - fromBudget,
+			rise: refilled.rise - rise,
+			credit: refilled.credit - (flat - fromBudget),
+		},
+	};
 }

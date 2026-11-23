@@ -1,5 +1,5 @@
 import { Assert, Test } from "@rbxts/lunit";
-import { ROLL_START_SPEED, rollAngleAt, rollProgress, rollSpeedAt } from "./roll-curve";
+import { ROLL_START_SPEED, rollAngleAt, rollProgress, rollSpeedAt, rollTuckAt } from "./roll-curve";
 import { ROLL } from "./tuning";
 
 class RollCurveTests {
@@ -56,6 +56,25 @@ class RollCurveTests {
 			Assert.true(angle <= previous);
 			previous = angle;
 		}
+	}
+
+	@Test
+	public tuckStartsAndEndsStraightAndHoldsInTheMiddle() {
+		Assert.equal(rollTuckAt(0), 0);
+		Assert.equal(rollTuckAt(1), 0);
+		Assert.equal(rollTuckAt(0.5), 1);
+		Assert.equal(rollTuckAt(0.3), 1);
+		Assert.true(rollTuckAt(0.1) > 0 && rollTuckAt(0.1) < 1);
+	}
+
+	@Test
+	public tuckIsSymmetricAndNeverLeavesZeroToOne() {
+		for (let i = 0; i <= 100; i++) {
+			const tuck = rollTuckAt(i / 100);
+			Assert.true(tuck >= 0 && tuck <= 1);
+			Assert.true(math.abs(tuck - rollTuckAt(1 - i / 100)) < 1e-9);
+		}
+		Assert.equal(rollTuckAt(0 / 0), 0);
 	}
 
 	@Test

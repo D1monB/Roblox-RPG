@@ -15,10 +15,10 @@ export {
 } from "./movement-state";
 export type { MovementMode, MovementState, RollRefusal, RollResult } from "./movement-state";
 export { MOVEMENT_REMOTES, MOVEMENT_REMOTE_FOLDER } from "./network";
-export { ROLL_START_SPEED, rollAngleAt, rollProgress, rollSpeedAt } from "./roll-curve";
+export { ROLL_START_SPEED, rollAngleAt, rollProgress, rollSpeedAt, rollTuckAt } from "./roll-curve";
 export { normalizeRollDirection } from "./roll-direction";
 export type { FlatDirection } from "./roll-direction";
-export { checkMove, fullSpeedBudget } from "./speed-check";
+export { checkMove, clearRollCredit, fullSpeedBudget, grantRollCredit } from "./speed-check";
 export type { MoveSample, SpeedBudget, SpeedVerdict } from "./speed-check";
 export type { Stamina } from "./stamina";
 export { FALL, ROLL, ROLL_SPEED, SPEEDS, SPEED_CHECK, STAMINA } from "./tuning";

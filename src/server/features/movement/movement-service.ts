@@ -4,13 +4,16 @@ import {
 	MOVEMENT_REMOTES,
 	MOVEMENT_REMOTE_FOLDER,
 	MovementState,
+	ROLL,
 	SPEED_CHECK,
 	STAMINA,
 	SpeedBudget,
 	checkMove,
+	clearRollCredit,
 	die,
 	fallDamage,
 	fullSpeedBudget,
+	grantRollCredit,
 	initialMovementState,
 	isInvulnerable as isStateInvulnerable,
 	normalizeRollDirection,
@@ -50,6 +53,8 @@ interface PlayerMovement {
 	lastSampleAt: number;
 	anchorReadyAt: number;
 	speedBudget: SpeedBudget;
+	// When the roll credit in speedBudget stops counting.
+	rollCreditExpiresAt: number;
 	violations: number;
 	violationWindowStart: number;
 	// Highest point of the current fall, for fall damage. undefined = not falling.
@@ -134,7 +139,15 @@ function handleRequestRoll(player: Player, args: Array<unknown>): void {
 	}
 	// Cooldown / stamina / state refusals are NOT logged: with network delay an honest client can
 	// press a moment too early. The client's own movement is then judged by the speed check.
-	record.state = requestRoll(record.state, os.clock()).state;
+	const now = os.clock();
+	const result = requestRoll(record.state, now);
+	record.state = result.state;
+	if (result.refusal === undefined) {
+		// An accepted roll is legal movement ON TOP of sprinting, so it earns its distance. Without this,
+		// roll + sprint in one check window looked like a speedhack and the player was thrown back.
+		record.speedBudget = grantRollCredit(record.speedBudget);
+		record.rollCreditExpiresAt = now + ROLL.duration + SPEED_CHECK.interval * 2;
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -180,6 +193,9 @@ function checkSpeed(player: Player, record: PlayerMovement, root: BasePart, now:
 	}
 	if (now - record.lastSampleAt < SPEED_CHECK.interval) {
 		return;
+	}
+	if (record.speedBudget.credit > 0 && now > record.rollCreditExpiresAt) {
+		record.speedBudget = clearRollCredit(record.speedBudget);
 	}
 	// A NaN position gives NaN deltas, which checkMove rejects, so the player is returned to safety.
 	const delta = root.Position.sub(record.lastValidPosition);
@@ -319,6 +335,7 @@ function onPlayerAdded(player: Player): void {
 		lastSampleAt: 0,
 		anchorReadyAt: 0,
 		speedBudget: fullSpeedBudget(MAX_LEGAL_SPEED),
+		rollCreditExpiresAt: 0,
 		violations: 0,
 		violationWindowStart: 0,
 		fallTopY: undefined,
