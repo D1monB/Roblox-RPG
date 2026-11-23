@@ -95,7 +95,10 @@ Data security and anti-exploit are the top requirement of this project.
 - CI (GitHub Actions) runs build, lint, tests and audit on every pull request.
 
 ## Git workflow
-- `main` is protected: changes go through pull requests, CI must pass.
+- Branches: `main` = stable releases, `develop` = integration branch for day-to-day work.
+- Work happens on short-lived branches from `develop` (`feat/...`, `fix/...`, `chore/...`), merged into `develop` by PR.
+  `develop` is merged into `main` by PR only when it is stable.
+- `main` and `develop` are protected: changes go through pull requests, CI must pass.
 - Small commits, clear messages (`feat(combat): add auto-attack tick`).
 - Do not commit generated output (`out/`, `node_modules/`).
 
