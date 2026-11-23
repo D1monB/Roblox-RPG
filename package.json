@@ -15,7 +15,9 @@
 		"node": ">=24"
 	},
 	"dependencies": {
-		"@rbxts/services": "1.6.0"
+		"@rbxts/profile-store": "1.0.3",
+		"@rbxts/services": "1.6.0",
+		"@rbxts/t": "3.2.1"
 	},
 	"devDependencies": {
 		"@rbxts/compiler-types": "3.0.0-types.0",

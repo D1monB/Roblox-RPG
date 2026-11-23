@@ -16,6 +16,7 @@
 | `combat.md` | WoW | v1 |
 | `classes-and-skills.md` | Baldur's Gate 3 / Divinity | v1 |
 | `items-and-rarity.md` | Baldur's Gate 3 / Divinity | v1 |
+| `profile-and-saving.md` | ProfileStore (loleris) | v1 |
 
 ## Журнал рішень
 Ухвалені рішення (платформи, вибір цілі, респек, лут, смерть, сетинг, ресурси) лежать у `decisions.md`.
