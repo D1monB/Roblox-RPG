@@ -24,6 +24,12 @@ export class ProfileSessions {
 	private readonly joins = new Map<number, number>();
 	private readonly active = new Map<number, ActiveSession>();
 	private nextToken = 0;
+	private loadedListeners: Array<(userId: number) => void> = [];
+
+	/** Called each time a player's data becomes available. Lets other features push the initial state. */
+	public onLoaded(listener: (userId: number) => void): void {
+		this.loadedListeners.push(listener);
+	}
 
 	public constructor(
 		private readonly backend: ProfileBackend,
@@ -85,6 +91,14 @@ export class ProfileSessions {
 				this.kick(userId, MESSAGE_SESSION_TAKEN);
 			}
 		});
+
+		for (const listener of this.loadedListeners) {
+			// A broken listener must not stop the others or leave the player half loaded.
+			const [ok, err] = pcall(listener, userId);
+			if (!ok) {
+				this.log(`loaded listener failed: ${err}`);
+			}
+		}
 	}
 
 	public playerRemoving(userId: number): void {

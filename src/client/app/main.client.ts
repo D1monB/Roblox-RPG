@@ -1,3 +1,5 @@
 // Client bootstrap. Starts feature controllers (input, UI, effects only).
 // Controllers are wired in here as they are implemented.
-print("[client] started");
+import { startStatsController } from "client/features/stats";
+
+startStatsController();

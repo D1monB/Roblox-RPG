@@ -7,5 +7,8 @@ export type { DerivedStats } from "./derived-stats";
 export { MAX_LEVEL, xpToNextLevel } from "./formulas";
 export { CLASS_IDS, STAT_IDS, isClassId, isStatId } from "./ids";
 export type { ClassId, StatId } from "./ids";
+export { STATS_REMOTES, STATS_REMOTE_FOLDER } from "./network";
+export { buildStatsSnapshot } from "./snapshot";
+export type { SnapshotSource, StatsSnapshot } from "./snapshot";
 export { MAX_XP_PER_GRANT, POINTS_PER_LEVEL, allocatePoint, applyXp } from "./progression";
 export type { Allocation, Progression, XpResult } from "./progression";
